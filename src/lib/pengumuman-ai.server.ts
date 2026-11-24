@@ -1,11 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createGoogle } from "@ai-sdk/google";
 import { generateText, APICallError } from "ai";
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/supabase";
 import { MAKS_PENGUMUMAN } from "@/lib/tahun";
 import { NADA_PENGUMUMAN, rapikanHasil, type NadaPengumuman } from "@/lib/pengumuman-ai";
 
-const MODEL = process.env["OPENAI_MODEL"] || "gpt-5.4-mini";
+const MODEL = process.env["GEMINI_MODEL"] || "gemini-3.5-flash-lite";
 
 /** Pastikan pemanggil adalah pengelola yang sedang masuk (dan tidak dinonaktifkan). */
 export async function cekPengelola(authHeader: string | undefined): Promise<string | null> {
@@ -40,12 +40,12 @@ function instruksi(nada: NadaPengumuman, tahunAjaran: string) {
 }
 
 export async function susunPengumuman(input: { draf: string; nada: NadaPengumuman; tahunAjaran: string }) {
-  const apiKey = process.env["OPENAI_API_KEY"];
+  const apiKey = process.env["GEMINI_API_KEY"];
   if (!apiKey) return { error: "Fitur AI belum dikonfigurasi." } as const;
-  const openai = createOpenAI({ apiKey });
+  const google = createGoogle({ apiKey });
   try {
     const result = await generateText({
-      model: openai.chat(MODEL),
+      model: google(MODEL),
       instructions: instruksi(input.nada, input.tahunAjaran),
       messages: [{ role: "user", content: `Draf / poin pengumuman:\n${input.draf.trim()}` }],
       maxRetries: 0,
@@ -57,14 +57,16 @@ export async function susunPengumuman(input: { draf: string; nada: NadaPengumuma
     const status = APICallError.isInstance(e) ? e.statusCode : undefined;
     console.error("susunPengumuman gagal", status, e instanceof Error ? e.message : e);
     const pesan = e instanceof Error ? e.message : "";
-    if (status === 429 && /quota|billing|credit/i.test(pesan))
-      return { error: "Saldo atau kuota akun OpenAI habis. Isi saldo di platform.openai.com/settings/billing, lalu coba lagi." } as const;
-    if (status === 429) return { error: "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi." } as const;
+    if (status === 403 && /billing|free tier/i.test(pesan))
+      return { error: "Kunci Gemini ini tidak mendapat kuota gratis. Buat kunci baru dari Gmail pribadi di aistudio.google.com." } as const;
+    if (status === 429) return { error: "Kuota gratis Gemini sedang penuh. Tunggu sebentar lalu coba lagi." } as const;
+    if (status === 400 && /api key/i.test(pesan))
+      return { error: "Kunci Gemini tidak valid. Periksa GEMINI_API_KEY." } as const;
     if (status === 401 || status === 403)
-      return { error: "Kunci OpenAI tidak valid atau tidak punya akses. Periksa OPENAI_API_KEY." } as const;
-    if (status === 404) return { error: "Model OpenAI tidak tersedia untuk akun ini. Periksa OPENAI_MODEL." } as const;
-    if (status === 400) return { error: "Permintaan ditolak OpenAI. Coba ubah draf Anda lalu susun lagi." } as const;
-    if (status === 500 || status === 503) return { error: "Layanan OpenAI sedang sibuk. Coba lagi sebentar." } as const;
+      return { error: "Kunci Gemini tidak valid atau tidak punya akses. Periksa GEMINI_API_KEY." } as const;
+    if (status === 404) return { error: "Model Gemini tidak tersedia untuk kunci ini. Periksa GEMINI_MODEL." } as const;
+    if (status === 400) return { error: "Permintaan ditolak Gemini. Coba ubah draf Anda lalu susun lagi." } as const;
+    if (status === 500 || status === 503) return { error: "Layanan Gemini sedang sibuk. Coba lagi sebentar." } as const;
     return { error: "AI sedang tidak dapat dihubungi. Coba lagi beberapa saat lagi." } as const;
   }
 }
