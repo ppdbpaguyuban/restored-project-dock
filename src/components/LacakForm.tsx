@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
-import { LABEL_BAYAR, nominalDibayar, rupiah, sisaBiaya, statusBayarDU, totalBiaya } from "@/lib/daftar-ulang";
+import { LABEL_BAYAR, bacaDU, nominalDibayar, rupiah, sisaBiaya, statusBayarDU, totalBiaya } from "@/lib/daftar-ulang";
 import { CEK_VERIFIKASI, LABEL_STATUS, formatNoValid, fungsiLacakBelumAda, rapikanNo, tahapan, type HasilLacak, type Keadaan } from "@/lib/lacak";
 
 const inputCls = "w-full rounded-lg border border-input bg-background px-4 py-3 text-base outline-none focus:border-primary";
@@ -110,8 +110,8 @@ function Hasil({ h }: { h: HasilLacak }) {
 }
 
 function DaftarUlangInfo({ h }: { h: HasilLacak }) {
-  const d = h.daftar_ulang;
-  if (!d?.items?.length) return <div className="border-t border-border p-4 text-sm text-muted-foreground sm:p-6">Rincian biaya daftar ulang akan diumumkan panitia.</div>;
+  if (!h.daftar_ulang?.items?.length) return <div className="border-t border-border p-4 text-sm text-muted-foreground sm:p-6">Rincian biaya daftar ulang akan diumumkan panitia.</div>;
+  const d = bacaDU(h.daftar_ulang);
   const sb = statusBayarDU(d);
   const dibayar = nominalDibayar(d);
   return (

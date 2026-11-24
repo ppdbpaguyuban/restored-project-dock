@@ -188,17 +188,23 @@ notify pgrst, 'reload schema';
 
 -- Daftar ulang: status bayar selalu mengikuti nominal "Sudah dibayar" (aman dijalankan ulang).
 -- dibayar <= 0 -> belum, 0 < dibayar < total -> cicil, dibayar >= total -> lunas. Nominal negatif dijadikan 0.
+create or replace function public.total_daftar_ulang(d jsonb) returns numeric
+language sql immutable set search_path = public as $$
+  select coalesce(sum(greatest(0, case when jsonb_typeof(i->'nominal') = 'number' then (i->>'nominal')::numeric else 0 end)), 0)
+  from jsonb_array_elements(case when jsonb_typeof(d->'items') = 'array' then d->'items' else '[]'::jsonb end) i;
+$$;
+create or replace function public.dibayar_daftar_ulang(d jsonb) returns numeric
+language sql immutable set search_path = public as $$
+  select greatest(0, coalesce(case when jsonb_typeof(d->'dibayar') = 'number' then round((d->>'dibayar')::numeric) end, 0));
+$$;
 create or replace function public.sinkron_daftar_ulang(d jsonb) returns jsonb
 language sql immutable set search_path = public as $$
-  select case when d is null or jsonb_typeof(d) <> 'object' then d else (
-    select d || jsonb_build_object('dibayar', bayar, 'status_bayar',
-      case when bayar <= 0 then 'belum' when bayar < total then 'cicil' else 'lunas' end)
-    from (select
-      greatest(0, coalesce(case when jsonb_typeof(d->'dibayar') = 'number' then round((d->>'dibayar')::numeric) end, 0)) as bayar,
-      coalesce((select sum(greatest(0, case when jsonb_typeof(i->'nominal') = 'number' then (i->>'nominal')::numeric else 0 end))
-        from jsonb_array_elements(case when jsonb_typeof(d->'items') = 'array' then d->'items' else '[]'::jsonb end) i), 0) as total
-    ) x
-  ) end;
+  select case when d is null or jsonb_typeof(d) <> 'object' then d else
+    d || jsonb_build_object('dibayar', public.dibayar_daftar_ulang(d), 'status_bayar',
+      case when public.dibayar_daftar_ulang(d) <= 0 then 'belum'
+           when public.dibayar_daftar_ulang(d) < public.total_daftar_ulang(d) then 'cicil'
+           else 'lunas' end)
+  end;
 $$;
 create or replace function public.trg_sinkron_daftar_ulang() returns trigger
 language plpgsql set search_path = public as $$
@@ -209,6 +215,8 @@ end $$;
 drop trigger if exists trg_sinkron_daftar_ulang on public.pendaftar;
 create trigger trg_sinkron_daftar_ulang before insert or update of daftar_ulang on public.pendaftar
   for each row execute function public.trg_sinkron_daftar_ulang();
--- Rapikan data lama yang status bayarnya tidak cocok dengan nominal
-update public.pendaftar set daftar_ulang = public.sinkron_daftar_ulang(daftar_ulang)
-  where daftar_ulang is not null and daftar_ulang is distinct from public.sinkron_daftar_ulang(daftar_ulang);
+-- Rapikan data lama. Yang dulu ditandai Lunas tanpa nominal lengkap tetap Lunas (nominal diisi sebesar total).
+update public.pendaftar set daftar_ulang = public.sinkron_daftar_ulang(
+    case when daftar_ulang->>'status_bayar' = 'lunas' and public.dibayar_daftar_ulang(daftar_ulang) < public.total_daftar_ulang(daftar_ulang)
+      then daftar_ulang || jsonb_build_object('dibayar', public.total_daftar_ulang(daftar_ulang)) else daftar_ulang end)
+  where daftar_ulang is not null and jsonb_typeof(daftar_ulang) = 'object';

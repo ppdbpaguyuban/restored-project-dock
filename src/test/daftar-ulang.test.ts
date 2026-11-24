@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { totalBiaya, sisaBiaya, rapikanDU, statusBayar, sinkronDU } from "@/lib/daftar-ulang";
+import { totalBiaya, sisaBiaya, rapikanDU, statusBayar, sinkronDU, bacaDU } from "@/lib/daftar-ulang";
 const d = { items: [{ nama: "Seragam", nominal: 500000 }, { nama: "Buku", nominal: 250000 }], dibayar: 300000 };
 describe("daftar ulang", () => {
   it("menjumlah total biaya", () => expect(totalBiaya(d)).toBe(750000));
@@ -25,4 +25,6 @@ describe("sinkron status bayar dengan nominal Sudah Dibayar", () => {
     expect(sisaBiaya(naik)).toBe(100000);
   });
   it("simpan selalu mengirim status sesuai nominal", () => expect(rapikanDU({ items: [{ nama: "MPLS", nominal: 100 }], dibayar: 100, status_bayar: "belum" }).status_bayar).toBe("lunas"));
+  it("data lama bertanda Lunas tanpa nominal tetap Lunas saat dibaca", () => expect(bacaDU({ ...d, dibayar: 0, status_bayar: "lunas" })).toMatchObject({ dibayar: 750000, status_bayar: "lunas" }));
+  it("data lama bertanda Belum tapi sudah ada nominal dibaca sesuai nominal", () => expect(bacaDU({ ...d, status_bayar: "belum" }).status_bayar).toBe("cicil"));
 });

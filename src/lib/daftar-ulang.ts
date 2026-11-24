@@ -24,5 +24,10 @@ export const sinkronDU = (d: DaftarUlang): DaftarUlang => {
   return { ...d, dibayar, status_bayar: statusBayar(totalBiaya(d), dibayar) };
 };
 export const rupiah = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
+/** Baca data tersimpan. Data lama yang ditandai Lunas tanpa nominal lengkap dianggap lunas (nominal = total). */
+export const bacaDU = (d: DaftarUlang): DaftarUlang => {
+  const total = totalBiaya(d);
+  return sinkronDU(d.status_bayar === "lunas" && nominalDibayar(d) < total ? { ...d, dibayar: total } : d);
+};
 /** Buang baris kosong sebelum disimpan, lalu sinkronkan status bayar. */
 export const rapikanDU = (d: DaftarUlang): DaftarUlang => sinkronDU({ ...d, items: d.items.filter((i) => i.nama.trim()).map((i) => ({ nama: i.nama.trim(), nominal: Math.max(0, Number(i.nominal) || 0) })) });
