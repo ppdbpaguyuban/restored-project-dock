@@ -185,3 +185,30 @@ create policy "pendaftar ditambah pengelola" on public.pendaftar for insert to a
   with check (exists (select 1 from public.pengelola p where lower(p.email) = lower(auth.jwt()->>'email')));
 grant insert on public.pendaftar to authenticated;
 notify pgrst, 'reload schema';
+
+-- Daftar ulang: status bayar selalu mengikuti nominal "Sudah dibayar" (aman dijalankan ulang).
+-- dibayar <= 0 -> belum, 0 < dibayar < total -> cicil, dibayar >= total -> lunas. Nominal negatif dijadikan 0.
+create or replace function public.sinkron_daftar_ulang(d jsonb) returns jsonb
+language sql immutable set search_path = public as $$
+  select case when d is null or jsonb_typeof(d) <> 'object' then d else (
+    select d || jsonb_build_object('dibayar', bayar, 'status_bayar',
+      case when bayar <= 0 then 'belum' when bayar < total then 'cicil' else 'lunas' end)
+    from (select
+      greatest(0, coalesce(case when jsonb_typeof(d->'dibayar') = 'number' then round((d->>'dibayar')::numeric) end, 0)) as bayar,
+      coalesce((select sum(greatest(0, case when jsonb_typeof(i->'nominal') = 'number' then (i->>'nominal')::numeric else 0 end))
+        from jsonb_array_elements(case when jsonb_typeof(d->'items') = 'array' then d->'items' else '[]'::jsonb end) i), 0) as total
+    ) x
+  ) end;
+$$;
+create or replace function public.trg_sinkron_daftar_ulang() returns trigger
+language plpgsql set search_path = public as $$
+begin
+  new.daftar_ulang := public.sinkron_daftar_ulang(new.daftar_ulang);
+  return new;
+end $$;
+drop trigger if exists trg_sinkron_daftar_ulang on public.pendaftar;
+create trigger trg_sinkron_daftar_ulang before insert or update of daftar_ulang on public.pendaftar
+  for each row execute function public.trg_sinkron_daftar_ulang();
+-- Rapikan data lama yang status bayarnya tidak cocok dengan nominal
+update public.pendaftar set daftar_ulang = public.sinkron_daftar_ulang(daftar_ulang)
+  where daftar_ulang is not null and daftar_ulang is distinct from public.sinkron_daftar_ulang(daftar_ulang);

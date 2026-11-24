@@ -11,7 +11,18 @@ export const ITEM_DEFAULT: ItemBiaya[] = [
 ];
 
 export const totalBiaya = (d?: DaftarUlang | null) => (d?.items ?? []).reduce((s, i) => s + (Number(i.nominal) || 0), 0);
-export const sisaBiaya = (d?: DaftarUlang | null) => (d?.status_bayar === "lunas" ? 0 : Math.max(0, totalBiaya(d) - (Number(d?.dibayar) || 0)));
+/** Nominal dibayar yang sah: bilangan bulat, tidak pernah negatif. */
+export const nominalDibayar = (d?: DaftarUlang | null) => Math.max(0, Math.round(Number(d?.dibayar) || 0));
+/** Status bayar selalu diturunkan dari nominal Sudah Dibayar terhadap Total Biaya. */
+export const statusBayar = (total: number, dibayar: number): StatusBayar => (dibayar <= 0 ? "belum" : dibayar < total ? "cicil" : "lunas");
+export const statusBayarDU = (d?: DaftarUlang | null): StatusBayar => statusBayar(totalBiaya(d), nominalDibayar(d));
+/** Sisa = Total Biaya - Sudah Dibayar (minimal 0). */
+export const sisaBiaya = (d?: DaftarUlang | null) => Math.max(0, totalBiaya(d) - nominalDibayar(d));
+/** Samakan nominal & status: dibayar tidak negatif, status mengikuti nominal. */
+export const sinkronDU = (d: DaftarUlang): DaftarUlang => {
+  const dibayar = nominalDibayar(d);
+  return { ...d, dibayar, status_bayar: statusBayar(totalBiaya(d), dibayar) };
+};
 export const rupiah = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
-/** Buang baris kosong sebelum disimpan. */
-export const rapikanDU = (d: DaftarUlang): DaftarUlang => ({ ...d, items: d.items.filter((i) => i.nama.trim()).map((i) => ({ nama: i.nama.trim(), nominal: Math.max(0, Number(i.nominal) || 0) })) });
+/** Buang baris kosong sebelum disimpan, lalu sinkronkan status bayar. */
+export const rapikanDU = (d: DaftarUlang): DaftarUlang => sinkronDU({ ...d, items: d.items.filter((i) => i.nama.trim()).map((i) => ({ nama: i.nama.trim(), nominal: Math.max(0, Number(i.nominal) || 0) })) });

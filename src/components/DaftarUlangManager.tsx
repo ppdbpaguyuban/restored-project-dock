@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { ITEM_DEFAULT, LABEL_BAYAR, rapikanDU, rupiah, sisaBiaya, totalBiaya, type DaftarUlang, type StatusBayar } from "@/lib/daftar-ulang";
+import { ITEM_DEFAULT, LABEL_BAYAR, rapikanDU, rupiah, sinkronDU, sisaBiaya, statusBayarDU, totalBiaya, type DaftarUlang } from "@/lib/daftar-ulang";
 
 type P = { id: string; nama: string; jurusan: string; status: string | null; no_daftar?: string | null; daftar_ulang?: DaftarUlang | null };
 const inputCls = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40";
@@ -27,7 +27,7 @@ export function DaftarUlangManager({ list, onUpdate }: { list: P[]; onUpdate: (i
           return (
             <li key={x.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-3 text-sm">
               <div className="min-w-0 flex-1"><p className="font-medium">{x.nama}</p><p className="text-xs text-muted-foreground">{x.jurusan} · {x.no_daftar ?? "-"} · {x.status ?? "baru"}</p></div>
-              <span className="text-xs">{du?.items?.length ? `${rupiah(totalBiaya(du))} · ${LABEL_BAYAR[du.status_bayar ?? "belum"]}` : "Rincian belum diisi"}</span>
+              <span className="text-xs">{du?.items?.length ? `${rupiah(totalBiaya(du))} · ${LABEL_BAYAR[statusBayarDU(du)]}` : "Rincian belum diisi"}</span>
               <button onClick={() => setEdit(x)} className="rounded-full bg-foreground px-4 py-1.5 text-xs text-background">Atur</button>
             </li>
           );
@@ -39,7 +39,9 @@ export function DaftarUlangManager({ list, onUpdate }: { list: P[]; onUpdate: (i
 }
 
 function Editor({ p, onClose, onSaved }: { p: P; onClose: () => void; onSaved: (patch: Partial<P>) => void }) {
-  const [d, setD] = useState<DaftarUlang>(p.daftar_ulang?.items ? p.daftar_ulang : { items: ITEM_DEFAULT, status_bayar: "belum" });
+  const [d, setRaw] = useState<DaftarUlang>(() => sinkronDU(p.daftar_ulang?.items ? p.daftar_ulang : { items: ITEM_DEFAULT }));
+  const setD = (n: DaftarUlang) => setRaw(sinkronDU(n));
+  const sb = statusBayarDU(d);
   const [terima, setTerima] = useState(p.status === "diterima");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -71,10 +73,9 @@ function Editor({ p, onClose, onSaved }: { p: P; onClose: () => void; onSaved: (
         </div>
         <p className="mt-3 text-right text-sm">Total: <b>{rupiah(totalBiaya(d))}</b></p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1 text-xs">Status bayar
-            <select value={d.status_bayar ?? "belum"} onChange={(e) => setD({ ...d, status_bayar: e.target.value as StatusBayar })} className={inputCls}>
-              {(Object.keys(LABEL_BAYAR) as StatusBayar[]).map((k) => <option key={k} value={k}>{LABEL_BAYAR[k]}</option>)}
-            </select></label>
+          <div className="grid gap-1 text-xs">Status bayar
+            <p aria-label="Status bayar" aria-live="polite" className={`${inputCls} bg-muted font-medium`}>{LABEL_BAYAR[sb]}</p>
+            <span className="text-[11px] text-muted-foreground">Otomatis dari nominal Sudah dibayar</span></div>
           <label className="grid gap-1 text-xs">Sudah dibayar (Rp)
             <input value={d.dibayar ? d.dibayar.toLocaleString("id-ID") : ""} onChange={(e) => setD({ ...d, dibayar: Number(e.target.value.replace(/\D/g, "")) })} inputMode="numeric" placeholder="0" className={inputCls} /></label>
           <label className="grid gap-1 text-xs">Batas daftar ulang

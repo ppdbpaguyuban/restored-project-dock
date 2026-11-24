@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
-import { LABEL_BAYAR, rupiah, sisaBiaya, totalBiaya } from "@/lib/daftar-ulang";
+import { LABEL_BAYAR, nominalDibayar, rupiah, sisaBiaya, statusBayarDU, totalBiaya } from "@/lib/daftar-ulang";
 import { CEK_VERIFIKASI, LABEL_STATUS, formatNoValid, fungsiLacakBelumAda, rapikanNo, tahapan, type HasilLacak, type Keadaan } from "@/lib/lacak";
 
 const inputCls = "w-full rounded-lg border border-input bg-background px-4 py-3 text-base outline-none focus:border-primary";
@@ -112,7 +112,8 @@ function Hasil({ h }: { h: HasilLacak }) {
 function DaftarUlangInfo({ h }: { h: HasilLacak }) {
   const d = h.daftar_ulang;
   if (!d?.items?.length) return <div className="border-t border-border p-4 text-sm text-muted-foreground sm:p-6">Rincian biaya daftar ulang akan diumumkan panitia.</div>;
-  const sb = d.status_bayar ?? "belum";
+  const sb = statusBayarDU(d);
+  const dibayar = nominalDibayar(d);
   return (
     <div className="border-t border-border p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -122,7 +123,7 @@ function DaftarUlangInfo({ h }: { h: HasilLacak }) {
       <table className="mt-3 w-full text-sm"><tbody>
         {d.items.map((i) => <tr key={i.nama} className="border-b border-border"><td className="py-2">{i.nama}</td><td className="py-2 text-right">{rupiah(i.nominal)}</td></tr>)}
         <tr><td className="py-2 font-semibold">Total</td><td className="py-2 text-right font-semibold">{rupiah(totalBiaya(d))}</td></tr>
-        {sb !== "lunas" && !!d.dibayar && <tr><td className="text-muted-foreground">Sudah dibayar</td><td className="text-right text-muted-foreground">{rupiah(d.dibayar)}</td></tr>}
+        {sb !== "lunas" && dibayar > 0 && <tr><td className="text-muted-foreground">Sudah dibayar</td><td className="text-right text-muted-foreground">{rupiah(dibayar)}</td></tr>}
         {sb !== "lunas" && <tr><td className="py-1 font-semibold">Sisa</td><td className="py-1 text-right font-semibold">{rupiah(sisaBiaya(d))}</td></tr>}
       </tbody></table>
       {d.batas && <p className="mt-3 text-sm">Batas daftar ulang: <b>{fmt(d.batas)}</b></p>}
