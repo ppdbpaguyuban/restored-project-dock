@@ -1,0 +1,7 @@
+[
+ {"capability":"code","source":"zip src/","outcome":"restore","status":"done","next_action":"verify preview"},
+ {"capability":"database","source":"external Supabase zchtldzkchlmfooexhbx","outcome":"keep external (user request)","status":"connected","next_action":"none"},
+ {"capability":"auth (admin)","source":"external Supabase auth","outcome":"keep external","status":"connected","next_action":"admin sign-in by user"},
+ {"capability":"storage (berkas, aset)","source":"external Supabase storage","outcome":"keep external","status":"connected","next_action":"none"},
+ {"capability":"AI pengumuman","source":"server fn, Gemini via OPENAI_API_KEY secret","outcome":"keep","status":"pending secret","next_action":"add OPENAI_API_KEY secret when needed"}
+]

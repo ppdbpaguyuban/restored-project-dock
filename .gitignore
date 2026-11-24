@@ -16,6 +16,14 @@ dist-ssr
 .nitro
 *.local
 
+# Local environment files (secrets)
+.env
+.env.*
+!.env.example
+
+# Generated cPanel upload package
+cpanel-upload.zip
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

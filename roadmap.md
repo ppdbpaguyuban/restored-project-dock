@@ -1,0 +1,22 @@
+- [x] Optimasi mobile logo/animasi/kartu jurusan
+- [x] Admin: unggah & ganti logo + foto galeri
+
+- [x] Riwayat audit per pendaftar (siapa ubah status/catatan, kapan)
+- [x] Beranda: highlight formulir & jadwal pendaftaran, warna lebih ceria tetap elegan
+- [x] Halaman konfirmasi setelah daftar: nomor pendaftaran + langkah selanjutnya
+- [x] Optimasi HP: sorotan beranda, kartu jadwal, pilihan jurusan di formulir
+- [x] Admin: atur tanggal, status, dan urutan gelombang yang tampil di beranda
+- [x] Halaman cek status pendaftaran (nomor + tanggal lahir), progres verifikasi berkas
+- [x] Beranda: seksi Prestasi Sekolah
+- [x] Penyimpanan logo (aset) & berkas pendaftar diperiksa
+- [x] Popup verifikasi: navigasi, 1-klik loloskan, filter belum dicek
+- [x] Cetak lembar kendali A4
+- [x] Formulir pendaftaran tersimpan ke tabel pendaftar (diuji)
+- [x] Admin: kelola Gelombang & FAQ (+ tombol isi FAQ contoh)
+- [x] Admin: asisten AI menyusun pengumuman dari draf/poin
+- [x] Isi gelombang 2027/2028, syarat, dan FAQ — sudah tersedia di database
+- [x] Admin: rekap pendaftar per jurusan + checklist verifikasi
+- [x] Admin: tab Syarat + seksi Syarat Pendaftaran di beranda
+- [x] Admin: tombol Tambah Pendaftar (calon siswa datang langsung)
+- [x] File isian jadwal & contoh tanggal diubah ke 2027/2028
+- [x] Beranda baru biru-kuning: formulir cepat, alur 6 tahap, jurusan, informasi PPDB, dan CTA

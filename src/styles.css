@@ -62,6 +62,17 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-gold: var(--gold);
+  --color-sun: var(--sun);
+  --color-sun-foreground: var(--sun-foreground);
+  --color-coral: var(--coral);
+  --color-sky: var(--sky);
+  --color-mint: var(--mint);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+  --font-display: "Plus Jakarta Sans", sans-serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-accent: "Caveat", cursive;
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -75,24 +86,35 @@
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.2 0.027 264);
+  --gold: oklch(0.86 0.17 95);
+  --sun: oklch(0.96 0.06 95);
+  --sun-foreground: oklch(0.32 0.15 264);
+  --coral: oklch(0.5 0.2 264);
+  --sky: oklch(0.99 0.0108 264);
+  --mint: oklch(0.975 0.027 264);
+  --navy: oklch(0.29 0.16 264);
+  --navy-foreground: oklch(0.99 0.009 264);
+  --gradient-hero: radial-gradient(60% 50% at 50% 0%, oklch(0.96 0.054 264 / 0.6), transparent 70%), linear-gradient(180deg, oklch(1 0 0), oklch(1 0 0));
+  --gradient-cheer: linear-gradient(135deg, oklch(0.36 0.18 264), oklch(0.5 0.22 264) 70%, oklch(0.8 0.16 95));
+  --shadow-glow: 0 20px 50px -24px oklch(0.4 0.18 264 / 0.3);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground: oklch(0.22 0.054 264);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.22 0.054 264);
+  --primary: oklch(0.45 0.198 264);
+  --primary-foreground: oklch(0.99 0.009 264);
+  --secondary: oklch(0.96 0.054 264);
+  --secondary-foreground: oklch(0.32 0.144 264);
+  --muted: oklch(0.985 0.0072 264);
+  --muted-foreground: oklch(0.5 0.027 264);
+  --accent: oklch(0.96 0.054 264);
+  --accent-foreground: oklch(0.3 0.162 264);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --border: oklch(0.92 0.018 264);
+  --input: oklch(0.92 0.018 264);
+  --ring: oklch(0.55 0.216 264);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -111,6 +133,17 @@
 .dark {
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
+  --gold: oklch(0.78 0.12 80);
+  --sun: oklch(0.8 0.14 85);
+  --sun-foreground: oklch(0.2 0.04 60);
+  --coral: oklch(0.7 0.15 35);
+  --sky: oklch(0.3 0.04 230);
+  --mint: oklch(0.3 0.05 165);
+  --navy: oklch(0.22 0.12 264);
+  --navy-foreground: oklch(0.984 0.003 247.858);
+  --gradient-hero: radial-gradient(60% 70% at 15% 10%, oklch(0.35 0.08 165 / 0.6), transparent 70%), radial-gradient(50% 60% at 90% 20%, oklch(0.4 0.08 85 / 0.4), transparent 70%);
+  --gradient-cheer: linear-gradient(120deg, oklch(0.45 0.11 165), oklch(0.5 0.1 185) 55%, oklch(0.65 0.13 85));
+  --shadow-glow: 0 20px 50px -20px oklch(0 0 0 / 0.6);
   --card: oklch(0.208 0.042 265.755);
   --card-foreground: oklch(0.984 0.003 247.858);
   --popover: oklch(0.208 0.042 265.755);
@@ -153,3 +186,34 @@
     color: var(--color-foreground);
   }
 }
+
+@keyframes reveal-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes line-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes sun-spin { to { transform: rotate(360deg); } }
+.reveal { will-change: transform, opacity; animation: reveal-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.line-grow { animation: line-grow 1.2s 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.sun-rays { transform-origin: 50px 50px; animation: sun-spin 60s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .reveal, .line-grow, .sun-rays { animation: none; } }
+
+@media (max-width: 640px) { @keyframes reveal-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } } .reveal { animation-duration: 0.6s; } .sun-rays { animation-duration: 90s; } }
+
+@utility bg-hero { background-image: var(--gradient-hero); }
+@utility bg-cheer { background-image: var(--gradient-cheer); }
+@utility shadow-glow { box-shadow: var(--shadow-glow); }
+@keyframes soft-pulse { 0%,100% { box-shadow: 0 0 0 0 oklch(0.52 0.13 148 / 0.5); } 50% { box-shadow: 0 0 0 8px oklch(0.52 0.13 148 / 0); } }
+.pulse-dot { animation: soft-pulse 2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .pulse-dot { animation: none; } }
+
+/* Cetak bukti pendaftaran: hanya kartu konfirmasi yang ikut tercetak */
+@media print {
+  body:has(#bukti-daftar) * { visibility: hidden; }
+  body:has(#bukti-daftar) #bukti-daftar, body:has(#bukti-daftar) #bukti-daftar * { visibility: visible; }
+  body:has(#bukti-daftar) #bukti-daftar { position: absolute; inset: 0 0 auto 0; margin: 0; border: 0; }
+}
+
+.konten-kaya ul { list-style: disc; padding-left: 1.25rem; }
+.konten-kaya ol { list-style: decimal; padding-left: 1.25rem; }
+.konten-kaya h3 { font-weight: 700; font-size: 1.1em; }
+.konten-kaya blockquote { border-left: 3px solid currentColor; padding-left: 0.75rem; opacity: 0.85; }
+.konten-kaya a { text-decoration: underline; font-weight: 600; }
+span.konten-kaya ul, span.konten-kaya ol { display: inline-block; text-align: left; }

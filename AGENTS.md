@@ -28,3 +28,9 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Database is an external Supabase project reached through the browser client in `src/lib/supabase.ts` (URL + publishable key); schema changes live in `supabase/kelola.sql` and are run by the user in the Supabase SQL Editor. Why: project uses its own Supabase, not Lovable Cloud.
+- Registration numbers (`no_daftar`) are generated in the browser (`src/lib/pendaftaran.ts`) and sent with the insert; the form drops any column the database reports as missing (e.g. new fields not yet added via `kelola.sql`) and retries. Why: anon RLS cannot read back the inserted row, and registration must not fail before the user runs the SQL.
+- Public status lookup goes only through the security-definer SQL function `lacak_pendaftaran` (registration number + birth date), never a direct anon SELECT on `pendaftar`. Why: anon must not read registrant rows; the function returns only non-sensitive fields.
+- AI announcement drafting runs in a server function (`src/lib/pengumuman-ai.functions.ts`) that verifies the admin's Supabase access token (sent by a client middleware) before calling the Lovable AI Gateway from `pengumuman-ai.server.ts`. Why: the external Supabase has no generated auth middleware and the AI key must stay server-side.
+- The registration form writes the existing `pendaftar` column names (`no_daftar`, `asal_sekolah`, `jurusan`, `berkas_*`, `gelombang`/`gelombang_id`) and uploads files to the private `berkas` bucket under `{no_daftar}/`. Why: Admin, export, print sheet and `lacak_pendaftaran` read those names; renaming would hide new registrants from staff.
