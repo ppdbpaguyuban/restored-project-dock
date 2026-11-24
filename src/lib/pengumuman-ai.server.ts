@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { createGoogle } from "@ai-sdk/google";
-import { streamText, APICallError } from "ai";
+import { generateText, APICallError } from "ai";
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/supabase";
 import { MAKS_PENGUMUMAN } from "@/lib/tahun";
 import { NADA_PENGUMUMAN, rapikanHasil, type NadaPengumuman } from "@/lib/pengumuman-ai";
@@ -40,17 +40,17 @@ function instruksi(nada: NadaPengumuman, tahunAjaran: string) {
 }
 
 export async function susunPengumuman(input: { draf: string; nada: NadaPengumuman; tahunAjaran: string }) {
-  const apiKey = process.env["OPENAI_API_KEY"];
+  const apiKey = process.env["GEMINI_API_KEY"];
   if (!apiKey) return { error: "Fitur AI belum dikonfigurasi." } as const;
   const google = createGoogle({ apiKey });
   try {
-    const result = streamText({
+    const result = await generateText({
       model: google.chat(MODEL),
       instructions: instruksi(input.nada, input.tahunAjaran),
       messages: [{ role: "user", content: `Draf / poin pengumuman:\n${input.draf.trim()}` }],
       maxRetries: 0,
     });
-    const teks = rapikanHasil(await result.text);
+    const teks = rapikanHasil(result.text);
     if (!teks) return { error: "AI tidak menghasilkan teks. Coba ubah draf Anda lalu susun lagi." } as const;
     return { teks } as const;
   } catch (e) {
@@ -58,8 +58,13 @@ export async function susunPengumuman(input: { draf: string; nada: NadaPengumuma
     console.error("susunPengumuman gagal", status, e instanceof Error ? e.message : e);
     if (status === 402) return { error: "Kuota AI habis. Tambah kredit AI, lalu coba lagi." } as const;
     if (status === 429) return { error: "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi." } as const;
+    const pesan = e instanceof Error ? e.message : "";
+    if (status === 403 && /billing|free tier/i.test(pesan))
+      return {
+        error: "Akun Google Gemini belum mengaktifkan pembayaran (billing). Aktifkan di aistudio.google.com/billing, lalu coba lagi.",
+      } as const;
     if (status === 400 || status === 401 || status === 403)
-      return { error: "Kunci Gemini tidak valid atau tidak punya akses. Periksa LOVABLE_API_KEY." } as const;
+      return { error: "Kunci Gemini tidak valid atau tidak punya akses. Periksa GEMINI_API_KEY." } as const;
     if (status === 404) return { error: "Model Gemini tidak tersedia. Periksa GEMINI_MODEL." } as const;
     if (status === 503) return { error: "Model Gemini sedang sibuk. Coba lagi sebentar." } as const;
     return { error: "AI sedang tidak dapat dihubungi. Coba lagi beberapa saat lagi." } as const;
